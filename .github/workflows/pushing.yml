@@ -2,7 +2,7 @@ name: Building docker image
 
 on:
   push:
-    branches: [ main, develop ]   # adjust to your needs
+    branches: [ main, develop ]
   workflow_dispatch:
 
 permissions:
@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   creating_image:
-    runs-on: ubuntu-latest          # typo fixed
+    runs-on: ubuntu-latest
     steps:
       - name: getting the code
         uses: actions/checkout@v4
@@ -19,21 +19,26 @@ jobs:
       - name: Generate Docker tag
         id: vars
         run: |
-          # Use commit SHA (shortened) + timestamp for uniqueness
           SHORT_SHA=$(git rev-parse --short HEAD)
           TIMESTAMP=$(date +'%Y%m%d%H%M%S')
           echo "AUTO_TAG=${SHORT_SHA}-${TIMESTAMP}" >> $GITHUB_ENV
-          # Alternative: just the commit SHA
-          # echo "AUTO_TAG=${SHORT_SHA}" >> $GITHUB_ENV
 
       - name: build the image
         run: docker build -t githubaction:${{ env.AUTO_TAG }} .
 
       - name: login to aws
-        uses: aws-actions/configure-aws-credentials@v4   # updated to latest major
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::354089337523:role/github-action-for-ecr   # FIX: use ROLE ARN, not policy
+          role-to-assume: arn:aws:iam::354089337523:role/github-action-for-ecr
           aws-region: ap-south-1
+
+      - name: Debug AWS credentials and ECR access
+        run: |
+             aws sts get-caller-identity
+             aws ecr describe-repositories --region ap-south-1 || echo "No repositories or access denied"
+             aws ecr get-login-password --region ap-south-1 > /tmp/ecr-pwd.txt
+             echo "Got password length: $(wc -c < /tmp/ecr-pwd.txt)"
+             cat /tmp/ecr-pwd.txt | docker login --username AWS --password-stdin 354089337523.dkr.ecr.ap-south-1.amazonaws.com
 
       - name: login to ecr
         run: |
@@ -43,11 +48,9 @@ jobs:
       - name: tag image for ecr
         run: |
           docker tag githubaction:${{ env.AUTO_TAG }} 354089337523.dkr.ecr.ap-south-1.amazonaws.com/githubaction:${{ env.AUTO_TAG }}
-          # Optionally also tag as 'latest'
           docker tag githubaction:${{ env.AUTO_TAG }} 354089337523.dkr.ecr.ap-south-1.amazonaws.com/githubaction:latest
 
       - name: push the image to ecr
         run: |
           docker push 354089337523.dkr.ecr.ap-south-1.amazonaws.com/githubaction:${{ env.AUTO_TAG }}
-          # Optionally push 'latest' as well
           docker push 354089337523.dkr.ecr.ap-south-1.amazonaws.com/githubaction:latest
