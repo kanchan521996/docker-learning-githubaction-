@@ -32,7 +32,7 @@ jobs:
       - name: login to aws
         uses: aws-actions/configure-aws-credentials@v4   # updated to latest major
         with:
-          role-to-assume: arn:aws:iam::354089337523:role/githubaction-docker-ecr   # FIX: use ROLE ARN, not policy
+          role-to-assume: arn:aws:iam::354089337523:role/github-action-for-ecr   # FIX: use ROLE ARN, not policy
           aws-region: ap-south-1
 
       - name: login to ecr
