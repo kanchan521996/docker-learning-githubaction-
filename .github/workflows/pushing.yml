@@ -29,7 +29,7 @@ jobs:
       - name: login to aws
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::3:role/github-action-for-ecr
+          role-to-assume: arn:aws:iam::354089337523:role/github-action-for-ecr
           aws-region: ap-south-1
 
       - name: Debug AWS credentials and ECR access
@@ -38,19 +38,19 @@ jobs:
              aws ecr describe-repositories --region ap-south-1 || echo "No repositories or access denied"
              aws ecr get-login-password --region ap-south-1 > /tmp/ecr-pwd.txt
              echo "Got password length: $(wc -c < /tmp/ecr-pwd.txt)"
-             cat /tmp/ecr-pwd.txt | docker login --username AWS --password-stdin 3540.dkr.ecr.ap-south-1.amazonaws.com
+             cat /tmp/ecr-pwd.txt | docker login --username AWS --password-stdin 354089337523.dkr.ecr.ap-south-1.amazonaws.com
 
       - name: login to ecr
         run: |
           aws ecr get-login-password --region ap-south-1 | \
-          docker login --username AWS --password-stdin 35.dkr.ecr.ap-south-1.amazonaws.com
+          docker login --username AWS --password-stdin 354089337523.dkr.ecr.ap-south-1.amazonaws.com
 
       - name: tag image for ecr
         run: |
-          docker tag githubaction:${{ env.AUTO_TAG }} 3.dkr.ecr.ap-south-1.amazonaws.com/githubaction:${{ env.AUTO_TAG }}
+          docker tag githubaction:${{ env.AUTO_TAG }} 354089337523.dkr.ecr.ap-south-1.amazonaws.com/githubaction:${{ env.AUTO_TAG }}
           docker tag githubaction:${{ env.AUTO_TAG }} .dkr.ecr.ap-south-1.amazonaws.com/githubaction:latest
 
       - name: push the image to ecr
         run: |
-          docker push 3.dkr.ecr.ap-south-1.amazonaws.com/githubaction:${{ env.AUTO_TAG }}
-          docker push 33.dkr.ecr.ap-south-1.amazonaws.com/githubaction:latest
+          docker push 354089337523.dkr.ecr.ap-south-1.amazonaws.com/githubaction:${{ env.AUTO_TAG }}
+          docker push 354089337523.dkr.ecr.ap-south-1.amazonaws.com/githubaction:latest
