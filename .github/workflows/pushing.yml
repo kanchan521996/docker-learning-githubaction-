@@ -9,9 +9,21 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  AWS_REGION: ap-south-1
+  ECR_REGISTRY: 354089337523.dkr.ecr.ap-south-1.amazonaws.com
+  ECR_REPOSITORY: githubaction
+  ECS_CLUSTER: learning-docker-ecs        # <-- CHANGE THIS
+  ECS_SERVICE: github-learning-service-mo2djb88         # <-- CHANGE THIS
+  ECS_TASK_DEFINITION: task-definition.json   # the file in your repo
+  CONTAINER_NAME: docker-larning          # matches your container name
+
 jobs:
   creating_image:
     runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.vars.outputs.AUTO_TAG }}
+      image_uri: ${{ steps.push.outputs.image_uri }}
     steps:
       - name: getting the code
         uses: actions/checkout@v4
@@ -21,36 +33,57 @@ jobs:
         run: |
           SHORT_SHA=$(git rev-parse --short HEAD)
           TIMESTAMP=$(date +'%Y%m%d%H%M%S')
-          echo "AUTO_TAG=${SHORT_SHA}-${TIMESTAMP}" >> $GITHUB_ENV
+          echo "AUTO_TAG=${SHORT_SHA}-${TIMESTAMP}" >> $GITHUB_OUTPUT
 
       - name: build the image
-        run: docker build -t githubaction:${{ env.AUTO_TAG }} .
+        run: docker build -t githubaction:${{ steps.vars.outputs.AUTO_TAG }} .
 
-      - name: login to aws
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::354089337523:role/github-action-for-ecr
-          aws-region: ap-south-1
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Debug AWS credentials and ECR access
-        run: |
-             aws sts get-caller-identity
-             aws ecr describe-repositories --region ap-south-1 || echo "No repositories or access denied"
-             aws ecr get-login-password --region ap-south-1 > /tmp/ecr-pwd.txt
-             echo "Got password length: $(wc -c < /tmp/ecr-pwd.txt)"
-             cat /tmp/ecr-pwd.txt | docker login --username AWS --password-stdin 354089337523.dkr.ecr.ap-south-1.amazonaws.com
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
-      - name: login to ecr
+      - name: tag and push image to ECR
+        id: push
         run: |
-          aws ecr get-login-password --region ap-south-1 | \
-          docker login --username AWS --password-stdin 354089337523.dkr.ecr.ap-south-1.amazonaws.com
+          IMAGE_URI=${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ steps.vars.outputs.AUTO_TAG }}
+          docker tag githubaction:${{ steps.vars.outputs.AUTO_TAG }} $IMAGE_URI
+          docker push $IMAGE_URI
+          echo "image_uri=$IMAGE_URI" >> $GITHUB_OUTPUT
 
-      - name: tag image for ecr
-        run: |
-          docker tag githubaction:${{ env.AUTO_TAG }} 354089337523.dkr.ecr.ap-south-1.amazonaws.com/githubaction:${{ env.AUTO_TAG }}
-          
+  ECS-Push:
+    needs: creating_image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: push the image to ecr
-        run: |
-          docker push 354089337523.dkr.ecr.ap-south-1.amazonaws.com/githubaction:${{ env.AUTO_TAG }}
-          
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::354089337523:role/github-action-for-ecr
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Render task definition (replace image)
+        id: render
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ${{ env.ECS_TASK_DEFINITION }}
+          container-name: ${{ env.CONTAINER_NAME }}
+          image: ${{ needs.creating_image.outputs.image_uri }}
+
+      - name: Deploy to ECS service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.render.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
