@@ -48,9 +48,9 @@ jobs:
       - name: tag image for ecr
         run: |
           docker tag githubaction:${{ env.AUTO_TAG }} 354089337523.dkr.ecr.ap-south-1.amazonaws.com/githubaction:${{ env.AUTO_TAG }}
-          docker tag githubaction:${{ env.AUTO_TAG }} .dkr.ecr.ap-south-1.amazonaws.com/githubaction:latest
+          
 
       - name: push the image to ecr
         run: |
           docker push 354089337523.dkr.ecr.ap-south-1.amazonaws.com/githubaction:${{ env.AUTO_TAG }}
-          docker push 354089337523.dkr.ecr.ap-south-1.amazonaws.com/githubaction:latest
+          
