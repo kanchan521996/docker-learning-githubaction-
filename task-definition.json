@@ -1,46 +1,47 @@
 {
-  "family": "github-learning",
-  "executionRoleArn": "arn:aws:iam::354089337523:role/ecsTaskExecutionRole",
-  "taskRoleArn": "arn:aws:iam::354089337523:role/ecsTaskExecutionRole",
+  "family": "github-learning-service",
   "networkMode": "awsvpc",
   "requiresCompatibilities": ["FARGATE"],
-  "cpu": "1024",
-  "memory": "3072",
-  "runtimePlatform": {
-    "cpuArchitecture": "X86_64",
-    "operatingSystemFamily": "LINUX"
-  },
+  "cpu": "256",
+  "memory": "512",
   "containerDefinitions": [
     {
       "name": "docker-larning",
-      "image": "PLACEHOLDER_IMAGE",
-      "cpu": 0,
+      "image": "354089337523.dkr.ecr.ap-south-1.amazonaws.com/githubaction:latest",
+      "essential": true,
       "portMappings": [
         {
-          "containerPort": 80,
-          "hostPort": 80,
+          "containerPort": 8080,
+          "hostPort": 8080,
           "protocol": "tcp"
         }
       ],
-      "essential": true,
-      "environment": [],
-      "environmentFiles": [],
-      "mountPoints": [],
-      "volumesFrom": [],
-      "ulimits": [],
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "curl -f http://localhost:80/health || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      },
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "/ecs/github-learning",
-          "awslogs-create-group": "true",
+          "awslogs-group": "/ecs/github-learning-service",
           "awslogs-region": "ap-south-1",
           "awslogs-stream-prefix": "ecs"
-        },
-        "secretOptions": []
+        }
       },
-      "systemControls": []
+      "environment": [
+        {
+          "name": "ENV",
+          "value": "production"
+        }
+      ]
     }
   ],
-  "volumes": [],
-  "placementConstraints": []
+  "executionRoleArn": "arn:aws:iam::354089337523:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::354089337523:role/ecsTaskRole"
 }

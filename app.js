@@ -11,4 +11,9 @@ app.get('/', (req, res) => {
   res.sendFile(filePath);
 });
 
+// Health check endpoint for ECS
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'healthy' });
+});
+
 app.listen(80);
