@@ -26,6 +26,7 @@
         "retries": 3,
         "startPeriod": 60
       },
+
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
