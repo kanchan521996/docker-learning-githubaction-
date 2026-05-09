@@ -13,10 +13,10 @@ env:
   AWS_REGION: ap-south-1
   ECR_REGISTRY: 354089337523.dkr.ecr.ap-south-1.amazonaws.com
   ECR_REPOSITORY: githubaction
-  ECS_CLUSTER: learning-docker-ecs        # <-- CHANGE THIS
-  ECS_SERVICE: github-learning-service-mo2djb88         # <-- CHANGE THIS
-  ECS_TASK_DEFINITION: task-definition.json   # the file in your repo
-  CONTAINER_NAME: docker-larning          # matches your container name
+  ECS_CLUSTER: learning-docker-ecs        
+  ECS_SERVICE: github-learning-service-mo2djb88         
+  ECS_TASK_DEFINITION: task-definition.json   
+  CONTAINER_NAME: docker-larning         
 
 jobs:
   creating_image:
