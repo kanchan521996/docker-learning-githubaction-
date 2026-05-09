@@ -1,8 +1,8 @@
 const path = require('path');
-
 const express = require('express');
-
 const app = express();
+
+const PORT = process.env.PORT || 80;  // ✅ Environment variable se port
 
 app.use(express.static('public'));
 
@@ -13,7 +13,22 @@ app.get('/', (req, res) => {
 
 // Health check endpoint for ECS
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'healthy' });
+  res.status(200).json({ 
+    status: 'healthy',
+    timestamp: new Date(),
+    uptime: process.uptime()
+  });
 });
 
-app.listen(80);
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received');
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+});
+
+const server = app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
