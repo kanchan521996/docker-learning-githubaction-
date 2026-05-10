@@ -14,7 +14,7 @@ env:
   ECR_REGISTRY: 354089337523.dkr.ecr.ap-south-1.amazonaws.com
   ECR_REPOSITORY: githubaction
   ECS_CLUSTER: learning-docker-ecs        
-  ECS_SERVICE: github-learning-service-bsmqkh8z         
+  ECS_SERVICE: github-learning-service-wn9g10ne         
   ECS_TASK_DEFINITION: task-definition.json   
   CONTAINER_NAME: docker-larning         
 
